@@ -1,0 +1,52 @@
+[project]
+name = "baish"
+version = "0.1.1a"
+description = "A security-focused tool that uses LLMs to analyze shell scripts"
+readme = "README.md"
+authors = [
+    {name = "curtis", email = "curtis@serverascode.com"}
+]
+license = {text = "GPL-3.0"}
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers", 
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Security",
+    "Topic :: System :: Systems Administration",
+    "Topic :: Utilities"
+]
+dependencies = [
+    "langchain>=0.3.8",
+    "anthropic>=0.39.0",
+    "groq>=0.12.0",
+    "yara-python>=4.5.1",
+    "python-magic>=0.4.27",
+    "pyyaml>=6.0.2",
+    "rich>=13.9.4",
+    "langchain-anthropic>=0.3.0",
+    "langchain-groq>=0.2.1",
+    "langchain-core>=0.3.21",
+    "pydantic>=2.10.2",
+    "loguru>=0.7.2",
+    "langchain-ollama>=0.2.0",
+    "ollama>=0.4.2",
+    "tiktoken>=0.8.0",
+    "langchain-openai>=0.2.12",
+    "openai>=1.57.3"
+]
+
+[project.urls]
+Homepage = "https://github.com/taicodotca/baish"
+
+[project.scripts]
+baish = "baish.cli:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta" 
