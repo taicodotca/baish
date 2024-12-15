@@ -234,20 +234,22 @@ Examples:
   curl https://example.com/script.sh | baish -s | bash  # shield mode
         """
     )
-    # First parse just the config argument to load LLM choices
-    parser.add_argument('--config', help='Path to config file (default: ~/.baish/config.yaml)')
-    args, _ = parser.parse_known_args()
-    
-    # Load config for LLM choices
-    config = Config.load(args.config) if args.config else Config.load()
     
     parser.add_argument('--version', action='version', version=f'Baish {__version__}')
+    parser.add_argument('--config', help='Path to config file (default: ~/.baish/config.yaml)')
     parser.add_argument('--debug', action='store_true', help='Enable debug output')
-    parser.add_argument('--llm', choices=list(config.llms.keys()), help='Choose LLM configuration')
     parser.add_argument('-s', '--shield', action='store_true', help='Shield mode - output safe script or error')
     parser.add_argument('--input', type=str, help='Input file path')
     parser.add_argument('-o', '--output', choices=['text', 'json'], default='text',
                        help='Output format (text or json)')
+
+    # First parse to get config
+    args, _ = parser.parse_known_args()
+    
+    # Only load config if we're not showing version or help
+    if '--version' not in sys.argv and '-h' not in sys.argv and '--help' not in sys.argv:
+        config = Config.load(args.config) if args.config else Config.load()
+        parser.add_argument('--llm', choices=list(config.llms.keys()), help='Choose LLM configuration')
     
     return parser.parse_args()
 

@@ -6,6 +6,8 @@ import shutil
 from pathlib import Path
 from src.baish.cli import BaishCLI, parse_args
 from src.baish.config import Config, LLMConfig
+from io import StringIO
+from src.baish.__version__ import __version__
 
 class TestCLI(unittest.TestCase):
     def setUp(self):
@@ -388,8 +390,11 @@ class TestCLI(unittest.TestCase):
     def test_parse_args_version(self):
         """Test version argument displays version"""
         with patch('sys.argv', ['baish', '--version']):
-            with self.assertRaises(SystemExit):
-                parse_args()
+            with self.assertRaises(SystemExit) as cm:
+                with patch('sys.stdout', new=StringIO()) as fake_out:
+                    parse_args()
+            self.assertEqual(cm.exception.code, 0)
+            self.assertIn(__version__, fake_out.getvalue())
 
     def test_parse_args_debug(self):
         """Test debug flag is properly set"""

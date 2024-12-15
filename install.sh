@@ -4,8 +4,7 @@ set -e
 SCRIPT_VERSION="1.0.0"
 DRY_RUN=${DRY_RUN:-}
 QUIET=${QUIET:-}
-NO_DEPENDENCIES=${NO_DEPENDENCIES:-}
-USE_VENV=${USE_VENV:-false}
+USE_VENV=${USE_VENV:-true}
 
 show_banner() {
     [ -z "$QUIET" ] && echo "
@@ -32,6 +31,33 @@ is_dry_run() {
     [ -n "$DRY_RUN" ]
 }
 
+check_dependencies() {
+    log "Checking system dependencies..."
+    if [ "$(uname)" = "Darwin" ]; then
+        if ! command_exists brew; then
+            echo "Error: brew is required to check for libmagic"
+            echo "Install from https://brew.sh"
+            exit 1
+        fi
+        if ! brew list libmagic &>/dev/null; then
+            echo "Error: libmagic not found"
+            echo "Install with: brew install libmagic"
+            exit 1
+        fi
+    elif [ "$(uname)" = "Linux" ]; then
+        if ! ldconfig -p | grep -q libmagic; then
+            echo "Error: libmagic not found"
+            echo "Install with: sudo apt install libmagic1 (Debian/Ubuntu)"
+            echo "           or sudo dnf install file-libs (Fedora)"
+            echo "           or sudo pacman -S file (Arch)"
+            exit 1
+        fi
+    else
+        echo "Unsupported operating system: $(uname)"
+        exit 1
+    fi
+}
+
 check_python_requirements() {
     log "Checking python requirements..."
     if ! command_exists python3; then
@@ -39,7 +65,6 @@ check_python_requirements() {
         exit 1
     fi
 
-    # Simple Python version check without bc
     if ! python3 -c 'import sys; exit(0 if sys.version_info >= (3, 10) else 1)' 2>/dev/null; then
         PYTHON_VERSION=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
         echo "Error: Python 3.10 or higher required (found $PYTHON_VERSION)"
@@ -48,80 +73,39 @@ check_python_requirements() {
     PYTHON_VERSION=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
     echo "Python $PYTHON_VERSION found, continuing..."
 
-    # Check pip/pip3
     if ! command_exists pip3 && ! command_exists pip; then
         echo "Error: pip is not installed"
-        echo "       Please install pip or pip3 and try again."
-        echo "       On Ubuntu/Debian, you can install it with 'apt install python3-pip'."
+        echo "On Ubuntu/Debian: apt install python3-pip"
+        echo "On Fedora: dnf install python3-pip"
+        echo "On macOS: brew install python3"
         exit 1
-    else
-        echo "pip found, continuing..."
     fi
 
-    # Check venv module if USE_VENV is set
-    if [ -n "$USE_VENV" ]; then
-        if ! python3 -c "import venv" 2>/dev/null; then
-            echo "Error: Python venv module not available. Install python3-venv package."
-            exit 1
-        fi
-    fi
-}
-
-install_dependencies() {
-    if [ "$(uname)" = "Darwin" ]; then
-        if ! command_exists brew; then
-            log "Error: Attempting to install libmagic on macOS, but brew is not installed."
-            log "       Either install brew or install libmagic manually."
-            log "       Then run with --no-dependencies to skip this step."
-            exit 1
-        fi
-        $sh_c "brew install libmagic"
-    elif [ "$(uname)" = "Linux" ]; then
-        $sh_c "apt update > /dev/null 2>&1"
-        $sh_c "apt install -y libmagic1 > /dev/null 2>&1"
-    else
-        log "Unsupported operating system: $(uname)"
+    if [ "$USE_VENV" = true ] && ! python3 -c "import venv" 2>/dev/null; then
+        echo "Error: Python venv module not available"
+        echo "On Ubuntu/Debian: apt install python3-venv"
+        echo "On Fedora: dnf install python3-venv"
         exit 1
     fi
 }
 
 do_install() {
-    user="$(id -un 2>/dev/null || true)"
-    sh_c='bash -c'  # Changed from sh -c to bash -c
-    if [ "$user" != 'root' ]; then
-        if command_exists sudo; then
-            sh_c='sudo -E bash -c'  # Changed to use bash explicitly
-        else
-            echo "Error: this installer needs root privileges"
-            exit 1
-        fi
-    fi
-
-    if is_dry_run; then
-        sh_c="echo"
-    fi
-
-    log "Installing dependencies..."
-    if [ -z "$NO_DEPENDENCIES" ]; then
-        install_dependencies
-    fi
-
     log "Creating configuration directory..."
-    $sh_c "mkdir -p ~/.baish"
+    mkdir -p "${HOME}/.baish"
 
     if [ "$USE_VENV" = true ]; then
         log "Setting up a python virtual environment for baish..."
-        $sh_c "mkdir -p ~/.baish"
-        $sh_c "python3 -m venv ~/.baish/python-venv"
-        $sh_c ". ~/.baish/python-venv/bin/activate && ~/.baish/python-venv/bin/pip install -q baish"
+        python3 -m venv "${HOME}/.baish/python-venv"
+        . "${HOME}/.baish/python-venv/bin/activate"
+        pip install -q baish
     else
         log "Installing baish with system python..."   
-        $sh_c "pip install baish"
+        pip install --user baish
     fi
     
     if [ ! -f "${HOME}/.baish/config.yaml" ]; then
         log "Creating default configuration..."
-        $sh_c "cat > ~/.baish/config.yaml << EOF
+        cat > "${HOME}/.baish/config.yaml" << EOF
 default_llm: openai
 llms:
   openai:
@@ -134,7 +118,7 @@ llms:
     model: claude-3-opus-20240229
     temperature: 0.1
     token_limit: 128000
-EOF"
+EOF
     fi
 }
 
@@ -153,9 +137,6 @@ while [ $# -gt 0 ]; do
         --use-venv)
             USE_VENV=true
             ;;
-        --no-dependencies)
-            NO_DEPENDENCIES=1
-            ;;
         -h|--help)
             echo "Usage: $0 [OPTIONS]"
             echo ""
@@ -164,8 +145,7 @@ while [ $# -gt 0 ]; do
             echo "  --version           Show version information"
             echo "  --dry-run           Show what would be done"
             echo "  --quiet             Suppress output"
-            echo "  --no-dependencies   Skip installing system dependencies"
-            echo "  --use-venv          Use virtual environment to install baish"
+            echo "  --use-venv          Use virtual environment to install baish (default)"
             exit 0
             ;;
         *)
@@ -178,6 +158,7 @@ while [ $# -gt 0 ]; do
 done
 
 show_banner
+check_dependencies
 check_python_requirements
 do_install
 log "Baish installed successfully!"
