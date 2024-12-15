@@ -128,9 +128,9 @@ def get_llm(config: Config, results_mgr: ResultsManager = None):
             get_llm._callback._current_date = results_mgr.current_date
             get_llm._callback.results_mgr = results_mgr
             
-        # NOTE(curtis - don't remove): We set the context window to 4096 to support the long prompt. 
-        # Otherwise the prompt will be truncated and the LLM will not be able to see the 
-        # entire prompt includnig the request to return json. 
+        # NOTE(curtis - don't remove): We set the context window to 4096 to support the 
+        # long prompt. Otherwise the prompt will be truncated and the LLM will not be 
+        # able to see the entire prompt including the request to return json. 
         if config.llm.provider == "ollama":
             return ChatOllama(
                 temperature=config.llm.temperature,

@@ -24,9 +24,6 @@ The underlying problems are the same in almost every application, and we are try
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
   - [From PyPI](#from-pypi)
-  - [Short Instructions For Ubuntu 24.04](#short-instructions-for-ubuntu-2404)
-  - [Virtual Environment](#virtual-environment)
-  - [From Source](#from-source)
 - [Usage](#usage)
   - [Setting Provider and Model](#setting-provider-and-model)
   - [Using Ollama](#using-ollama)
@@ -77,69 +74,42 @@ Baish currently supports the following providers:
 
 It is straightforward to add support for other providers, pretty much anything LangChain supports, and contributions are welcome!
 
-## Prerequisites
 
-* An API key from a supported LLM provider.
+
+## Installation
+
+### Prerequisites
+
+* An API key from a supported LLM provider, e.g. OpenAI, Anthropic, Groq, etc. or a local LLM.
 * Knowing which model from the provider you are going to use.
 * Python 3.10 or later
+* pip or pip3 installed
 * libmagic (for file type detection)
   * Ubuntu/Debian: `apt install libmagic1`
   * RHEL/CentOS: `dnf install file-libs`
   * macOS: `brew install libmagic`
 
-## Installation
+### Install
 
-### From PyPI
-
-### Short Instructions For Ubuntu 24.04
+Run the install script:
 
 ```bash
-sudo apt update
-sudo apt install -y python3 python3-pip libmagic1 python3-venv
-python3 -m venv .venv
-source .venv/bin/activate
-pip install baish
+curl -sSL https://raw.githubusercontent.com/taico-org/baish/main/install.sh -o install.sh
+chmod +x install.sh
+./install.sh
 ```
 
-### With a Virtual Environment
-
-* Best to create a virtual environment to install baish.
-
-```bash
-python3 -m venv baish-env
-source baish-env/bin/activate
-```
-
-### From PyPI
+or install with pip:
 
 ```bash
 pip install baish
 ```
 
-### From Source
+Edit the `~/.baish/config.yaml` file to your liking.
 
-* Checkout the repo:
+Set your API key in your environment variables, e.g. `export OPENAI_API_KEY=...` or `export ANTHROPIC_API_KEY=...`
 
-```bash
-git clone https://github.com/taicodotca/baish.git
-cd baish
-```
-
-* Install the dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-* Set the API key for the LLM provider in the `config.yaml` file.  You can also specify a different model, temperature, etc.
-
-* Run baish:
-
-```bash
-$ ./baish 
-Error: No input provided
-Usage: cat script.sh | baish
-```
+Now you can run baish!V
 
 ## Usage
 
@@ -150,6 +120,12 @@ curl -sSL https://thisisapotentiallyunsafescript.com/script.sh | baish
 ```
 
 Baish will output the harm score, complexity score, and an explanation for why the script is either safe or not.
+
+You can also run using the `--input` flag, which will read from a file instead of stdin.
+
+```bash
+baish --input some-script.sh
+```
 
 ### Setting Provider and Model
 
@@ -297,6 +273,7 @@ $ tree ~/.baish/
 
 | Feature | Status | Description | Details |
 |---------|--------|-------------|----------|
+| Work with no configuration | TODO | Work with no configuration | Work with no configuration file, just look for an API key in the environment, make it as easy as possible to get started |
 | OpenAI Support | DONE | Support OpenAI | Support OpenAI for LLM provider |
 | JSON Output | DONE | Structured output format | Enables programmatic parsing of Baish results |
 | LLM Logging | DONE | Request/response tracking | Log all LLM interactions with script IDs for audit trails |
