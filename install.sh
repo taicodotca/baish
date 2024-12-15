@@ -110,14 +110,14 @@ default_llm: openai
 llms:
   openai:
     provider: openai
-    model: gpt-4-turbo-preview
+    model: gpt-4o-mini
     temperature: 0.1
     token_limit: 128000
   claude:
     provider: anthropic
-    model: claude-3-opus-20240229
+    model: claude-3-5-sonnet-latest
     temperature: 0.1
-    token_limit: 128000
+    token_limit: 200000
 EOF
     fi
 }
@@ -145,7 +145,7 @@ while [ $# -gt 0 ]; do
             echo "  --version           Show version information"
             echo "  --dry-run           Show what would be done"
             echo "  --quiet             Suppress output"
-            echo "  --use-venv          Use virtual environment to install baish (default)"
+            echo "  --no-venv           Do not use virtual environment to install baish"
             exit 0
             ;;
         *)
