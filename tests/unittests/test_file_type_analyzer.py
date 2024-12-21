@@ -1,6 +1,8 @@
 import unittest
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
+
 from src.baish.file_analyzer import detect_file_type, evaluate_file_type
+
 
 class TestFileAnalyzer(unittest.TestCase):
     def test_detect_file_type_shell_script(self):
@@ -16,7 +18,7 @@ class TestFileAnalyzer(unittest.TestCase):
         self.assertTrue(result["is_text"])
 
     def test_detect_file_type_binary(self):
-        content = b'\x7fELF\x02\x01\x01'.decode('latin1')  # ELF binary
+        content = b"\x7fELF\x02\x01\x01".decode("latin1")  # ELF binary
         result = detect_file_type(content)
         self.assertEqual(result["mime_type"], "application/octet-stream")
         self.assertFalse(result["is_text"])
@@ -32,5 +34,6 @@ class TestFileAnalyzer(unittest.TestCase):
         self.assertEqual(result["mime_type"], "application/x-empty")
         self.assertTrue(result["is_text"])
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

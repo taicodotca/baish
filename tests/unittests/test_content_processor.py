@@ -1,22 +1,26 @@
-import unittest
-from src.baish.content_processor import chunk_content
 import tempfile
+import unittest
 from pathlib import Path
+
 from src.baish.config import Config, LLMConfig
+from src.baish.content_processor import chunk_content
+
 
 class TestContentProcessor(unittest.TestCase):
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp()
-        self.mock_config = Config(llms={
-            'test-llm': LLMConfig(
-                name='test-llm',
-                provider='groq',
-                model='test-model',
-                api_key='test-key',
-                token_limit=32768
-            )
-        })
-        self.mock_config.default_llm = 'test-llm'
+        self.mock_config = Config(
+            llms={
+                "test-llm": LLMConfig(
+                    name="test-llm",
+                    provider="groq",
+                    model="test-model",
+                    api_key="test-key",
+                    token_limit=32768,
+                )
+            }
+        )
+        self.mock_config.default_llm = "test-llm"
         self.mock_config.baish_dir = Path(self.temp_dir)
 
     def test_chunk_content_small(self):
@@ -41,7 +45,7 @@ class TestContentProcessor(unittest.TestCase):
         content = "line1\nline2\nline3\nline4\nline5"
         chunks = chunk_content(content, chunk_size=2)
         self.assertTrue(len(chunks) > 1)
-        self.assertTrue(all('\n' not in chunk[:-1] for chunk in chunks))
+        self.assertTrue(all("\n" not in chunk[:-1] for chunk in chunks))
 
     def test_chunk_content_empty(self):
         content = ""
@@ -54,4 +58,4 @@ class TestContentProcessor(unittest.TestCase):
         chunk_size = 100
         chunks = chunk_content(content, chunk_size)
         self.assertTrue(len(chunks) > 1)
-        self.assertTrue(all(len(chunk.split()) <= chunk_size for chunk in chunks)) 
+        self.assertTrue(all(len(chunk.split()) <= chunk_size for chunk in chunks))

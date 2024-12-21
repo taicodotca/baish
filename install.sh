@@ -1,10 +1,18 @@
 #!/bin/bash
 set -e
 
-SCRIPT_VERSION="1.0.0"
-DRY_RUN=${DRY_RUN:-}
+SCRIPT_VERSION="1.0.2"
+DRY_RUN=${DRY_RUN:-false}
 QUIET=${QUIET:-}
 USE_VENV=${USE_VENV:-true}
+
+sh_c() {
+    if is_dry_run; then
+        echo "$@"
+    else
+        eval "$@"
+    fi
+}
 
 show_banner() {
     [ -z "$QUIET" ] && echo "
@@ -28,7 +36,7 @@ command_exists() {
 }
 
 is_dry_run() {
-    [ -n "$DRY_RUN" ]
+    [ "$DRY_RUN" = true ]
 }
 
 check_dependencies() {
@@ -61,51 +69,54 @@ check_dependencies() {
 check_python_requirements() {
     log "Checking python requirements..."
     if ! command_exists python3; then
-        echo "Error: python3 is not installed"
+        log "Error: python3 is not installed"
         exit 1
     fi
 
     if ! python3 -c 'import sys; exit(0 if sys.version_info >= (3, 10) else 1)' 2>/dev/null; then
         PYTHON_VERSION=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
-        echo "Error: Python 3.10 or higher required (found $PYTHON_VERSION)"
+        log "Error: Python 3.10 or higher required (found $PYTHON_VERSION)"
         exit 1
     fi
     PYTHON_VERSION=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
-    echo "Python $PYTHON_VERSION found, continuing..."
+    log "Python $PYTHON_VERSION found, continuing..."
 
     if ! command_exists pip3 && ! command_exists pip; then
-        echo "Error: pip is not installed"
-        echo "On Ubuntu/Debian: apt install python3-pip"
-        echo "On Fedora: dnf install python3-pip"
-        echo "On macOS: brew install python3"
+        log "Error: pip is not installed"
+        log "On Ubuntu/Debian: apt install python3-pip"
+        log "On Fedora: dnf install python3-pip"
+        log "On macOS: brew install python3"
         exit 1
     fi
 
-    if [ "$USE_VENV" = true ] && ! python3 -c "import venv" 2>/dev/null; then
-        echo "Error: Python venv module not available"
-        echo "On Ubuntu/Debian: apt install python3-venv"
-        echo "On Fedora: dnf install python3-venv"
-        exit 1
+    if [ "$USE_VENV" = true ]; then
+        if ! python3 -c "import venv, ensurepip" 2>/dev/null; then
+            PYTHON_VERSION=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
+            log "Error: Python venv and ensurepip modules not available"
+            log "On Ubuntu/Debian: sudo apt install python3-venv python3-pip"
+            log "On Fedora: sudo dnf install python3-venv python3-pip"
+            exit 1
+        fi
     fi
 }
 
 do_install() {
     log "Creating configuration directory..."
-    mkdir -p "${HOME}/.baish"
+    sh_c "mkdir -p \"${HOME}/.baish\""
 
     if [ "$USE_VENV" = true ]; then
         log "Setting up a python virtual environment for baish..."
-        python3 -m venv "${HOME}/.baish/python-venv"
-        . "${HOME}/.baish/python-venv/bin/activate"
-        pip install -q baish
+        sh_c "python3 -m venv \"${HOME}/.baish/python-venv\""
+        sh_c ". \"${HOME}/.baish/python-venv/bin/activate\""
+        sh_c "pip install -q baish"
     else
         log "Installing baish with system python..."   
-        pip install --user baish
+        sh_c "pip install --user baish"
     fi
     
     if [ ! -f "${HOME}/.baish/config.yaml" ]; then
         log "Creating default configuration..."
-        cat > "${HOME}/.baish/config.yaml" << EOF
+        sh_c "cat > \"${HOME}/.baish/config.yaml\" << 'EOF'
 default_llm: openai
 llms:
   openai:
@@ -118,14 +129,35 @@ llms:
     model: claude-3-5-sonnet-latest
     temperature: 0.1
     token_limit: 200000
-EOF
+EOF"
+    fi
+}
+
+setup_alias() {
+    log "Setting up baish alias..."
+    SHELL_RC=""
+    if [ -n "$BASH_VERSION" ]; then
+        SHELL_RC="${HOME}/.bashrc"
+    elif [ -n "$ZSH_VERSION" ]; then
+        SHELL_RC="${HOME}/.zshrc"
+    fi
+
+    if [ -n "$SHELL_RC" ]; then
+        if ! sh_c "grep -q \"alias baish=\" \"$SHELL_RC\" 2>/dev/null"; then
+            if [ "$USE_VENV" = true ]; then
+                sh_c "echo 'alias baish=\"${HOME}/.baish/python-venv/bin/baish\"' >> \"$SHELL_RC\""
+            else
+                sh_c "echo 'alias baish=\"baish\"' >> \"$SHELL_RC\""
+            fi
+            log "Added baish alias to $SHELL_RC"
+        fi
     fi
 }
 
 while [ $# -gt 0 ]; do
     case "$1" in
         --dry-run)
-            DRY_RUN=1
+            DRY_RUN=true
             ;;
         --quiet)
             QUIET=1
@@ -134,8 +166,8 @@ while [ $# -gt 0 ]; do
             echo "baish installer version $SCRIPT_VERSION"
             exit 0
             ;;
-        --use-venv)
-            USE_VENV=true
+        --no-venv)
+            USE_VENV=false
             ;;
         -h|--help)
             echo "Usage: $0 [OPTIONS]"
@@ -158,13 +190,32 @@ while [ $# -gt 0 ]; do
 done
 
 show_banner
+
+if [ "$USE_VENV" = true ]; then
+    log "Using virtual environment"
+else
+    log "Not using virtual environment"
+fi
+
+if [ "$DRY_RUN" = true ]; then
+    log "Dry run mode enabled, only echoing commands"
+fi
+
 check_dependencies
 check_python_requirements
 do_install
-log "Baish installed successfully!"
-log "Now either setup your OpenAI or Claude API keys in your environment variables,"
-log "or setup the ~/.baish/config.yaml file with the LLM providers you would like to use."
-log "You can also run 'baish --help' to get started."
-log "If you installed with --use-venv, you can activate the virtual environment with"
-log "source ~/.baish/python-venv/bin/activate"
-log "and run baish from there."
+setup_alias
+
+if [ "$(uname)" = "Linux" ]; then
+    log "IMPORTANT!!!: Run the following command to use baish:"
+    log "source ~/.bashrc"
+    log "This sets up the baish alias in your shell"
+elif [ "$(uname)" = "Darwin" ]; then
+    log "IMPORTANT!!!: Run the following command to use baish:"
+    log "source ~/.zshrc"
+    log "This sets up the baish alias in your shell"
+elif [ "$USE_VENV" = true ]; then
+    log "==> IMPORTANT!!!: Run the following command to use baish:"
+    log "==> source ~/.baish/python-venv/bin/activate"
+fi
+

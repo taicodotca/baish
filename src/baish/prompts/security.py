@@ -1,9 +1,11 @@
-from langchain.prompts import SystemMessagePromptTemplate, HumanMessagePromptTemplate, ChatPromptTemplate
+from langchain.prompts import (ChatPromptTemplate, HumanMessagePromptTemplate,
+                               SystemMessagePromptTemplate)
 
 # NOTE(curtis - don't remove this comment): This prompt is currenlty more than 2048 tokens, so we need to set the context window to 4096 in Ollama and other models that have a smaller context window.
 # TODO (don't remove this comment): We should find a way to make this more concise.
 
-SYSTEM_PROMPT = SystemMessagePromptTemplate.from_template("""You are a security analyst specialized in script analysis. Your task is to analyze files for security risks and complexity. You MUST return your response in valid JSON format. A normal installation script MUST be marked as having a harm score of 2 or below even if it uses sudo or other privilege elevation.
+SYSTEM_PROMPT = SystemMessagePromptTemplate.from_template(
+    """You are a security analyst specialized in script analysis. Your task is to analyze files for security risks and complexity. You MUST return your response in valid JSON format. A normal installation script MUST be marked as having a harm score of 2 or below even if it uses sudo or other privilege elevation.
 
 If the file provided is a script, and is only modifying the system, but not doing anything malicious, the harm score should be below 3. If misconfiguration is the only risk, the harm score should be below 3. DO NOT evaluate it further if it is NOT a script. If it is not a script, the harm score should be 2 or below.
 
@@ -34,13 +36,16 @@ You MUST format your response as a valid JSON object like this, with no other te
     "requires_root": <true/false>,
     "explanation": "detailed explanation of the analysis"
 }}
-""")
+"""
+)
 
-HUMAN_PROMPT = HumanMessagePromptTemplate.from_template("""Here is the file to analyze. According to python-magic, the file type is: {mime_type}. According to LLM analysis, the file is a {file_type} with an explanation of why: {file_type_explanation}.
+HUMAN_PROMPT = HumanMessagePromptTemplate.from_template(
+    """Here is the file to analyze. According to python-magic, the file type is: {mime_type}. According to LLM analysis, the file is a {file_type} with an explanation of why: {file_type_explanation}.
                                                 
 === START OF FILE ===
 {content}
 === END OF FILE ===
-""")
+"""
+)
 
 PROMPT = ChatPromptTemplate.from_messages([SYSTEM_PROMPT, HUMAN_PROMPT])

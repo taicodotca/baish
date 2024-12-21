@@ -1,6 +1,8 @@
-from pathlib import Path
 import json
+from pathlib import Path
+
 from .config import Config
+
 
 class ResultsManager:
     def __init__(self, config: Config):
@@ -14,7 +16,7 @@ class ResultsManager:
             date_str, unique_id = self.get_latest_log()
         if not date_str or not unique_id:
             return
-        
+
         log_file = self.log_dir / f"{date_str}_{unique_id}_llm.jsonl"
         with open(log_file, "a") as f:
             f.write(json.dumps(log_entry) + "\n")
@@ -28,7 +30,7 @@ class ResultsManager:
                 return None, None
             latest_file = max(log_files, key=lambda x: x.stat().st_mtime)
             # Parse date and ID from filename
-            parts = latest_file.stem.split('_')
+            parts = latest_file.stem.split("_")
             if len(parts) >= 2:
                 self.current_date = parts[0]
                 self.current_id = parts[1]

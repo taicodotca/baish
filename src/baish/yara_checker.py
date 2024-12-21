@@ -1,6 +1,8 @@
-import yara
 from pathlib import Path
-from typing import Optional, Tuple, Dict
+from typing import Dict, Optional, Tuple
+
+import yara
+
 
 class YaraChecker:
     def __init__(self):
@@ -33,6 +35,6 @@ class YaraChecker:
         details = {
             "rules": [match.rule for match in matches],
             "tags": [tag for match in matches for tag in match.tags],
-            "explanations": [match.meta.get('explanation', '') for match in matches]
+            "explanations": [match.meta.get("explanation", "") for match in matches],
         }
-        return True, details 
+        return True, details

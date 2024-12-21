@@ -1,6 +1,8 @@
-from langchain.prompts import SystemMessagePromptTemplate, HumanMessagePromptTemplate, ChatPromptTemplate
+from langchain.prompts import (ChatPromptTemplate, HumanMessagePromptTemplate,
+                               SystemMessagePromptTemplate)
 
-SECURITY_MAP_SYSTEM = SystemMessagePromptTemplate.from_template("""You are a security analyst. Analyze this section of a script for security risks. Focus on:
+SECURITY_MAP_SYSTEM = SystemMessagePromptTemplate.from_template(
+    """You are a security analyst. Analyze this section of a script for security risks. Focus on:
 - Dangerous operations or commands
 - System modifications
 - Network activity
@@ -14,9 +16,11 @@ IMPORTANT: Return ONLY a raw JSON object with NO other text before or after. The
     "complexity_score": <integer between 1-10>,
     "requires_root": <boolean true/false>,
     "explanation": "<detailed explanation of security concerns>"
-}}""")
+}}"""
+)
 
-SECURITY_REDUCE_SYSTEM = SystemMessagePromptTemplate.from_template("""You are a security analyst. Combine these script analysis sections into a final assessment.
+SECURITY_REDUCE_SYSTEM = SystemMessagePromptTemplate.from_template(
+    """You are a security analyst. Combine these script analysis sections into a final assessment.
 Remember:
 - Installation scripts should have harm score ≤ 2
 - System modifications without malice should have harm score < 3
@@ -30,14 +34,21 @@ IMPORTANT: Return ONLY a raw JSON object with NO other text before or after. The
     "complexity_score": <integer between 1-10>,
     "requires_root": <boolean true/false>,
     "explanation": "<detailed explanation of behavior>"
-}}""")
+}}"""
+)
 
-MAP_PROMPT = ChatPromptTemplate.from_messages([
-    SECURITY_MAP_SYSTEM,
-    HumanMessagePromptTemplate.from_template("Analyze this content:\n\n{content}")
-])
+MAP_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        SECURITY_MAP_SYSTEM,
+        HumanMessagePromptTemplate.from_template("Analyze this content:\n\n{content}"),
+    ]
+)
 
-REDUCE_PROMPT = ChatPromptTemplate.from_messages([
-    SECURITY_REDUCE_SYSTEM,
-    HumanMessagePromptTemplate.from_template("Combine these analyses:\n\n{summaries}")
-]) 
+REDUCE_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        SECURITY_REDUCE_SYSTEM,
+        HumanMessagePromptTemplate.from_template(
+            "Combine these analyses:\n\n{summaries}"
+        ),
+    ]
+)
