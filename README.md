@@ -27,23 +27,62 @@ The [Toronto Artificial Intelligence and Cybersecurity Organization (TAICO)](htt
 
 ### Install
 
-Run the install script:
+* Ensure to have the prerequisites installed
+* Install with pipx is recommended
+* Install with pip is also supported
+
+#### Prerequisites
+
+Ensure you have prerequisites installed. Currently the install script won't install the prerequisites for you.
+
+On Linux:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/taico-org/baish/main/install.sh -o install.sh
-chmod +x install.sh
-./install.sh
+sudo apt install libmagic1
 ```
 
-or install with pip:
+On macOS:
+
+```bash
+brew install libmagic
+```
+
+#### Install with pipx
+
+First, install [pipx](https://github.com/pypa/pipx). There are instructions for Mac, Linux, and Windows on the pipx website.
+
+Then, install baish with pipx:
+
+```bash
+pipx install baish
+```
+
+Follow the pipx instructions to setup the alias in your shell, and at that point you can run `baish` as normal.
+
+#### Install with pip
+
+>NOTE: It's recommended to use pipx to install baish, as it creates a virtual environment to install the dependencies in.
 
 ```bash
 pip install baish
 ```
 
+### Configure
+
+Ensure to set your API key in your environment variables, e.g. `export OPENAI_API_KEY=...` or `export ANTHROPIC_API_KEY=...`
+
 Edit the `~/.baish/config.yaml` file to your liking.
 
-Set your API key in your environment variables, e.g. `export OPENAI_API_KEY=...` or `export ANTHROPIC_API_KEY=...`
+e.g. use the `haiku` model from Anthropic:
+
+```yaml
+default_llm: haiku # default model to use
+llms:
+  haiku: # memorable name
+    provider: anthropic # provider name
+    model: claude-3-5-haiku-latest # model name
+    temperature: 0.1 # temperature
+```
 
 Now you can run baish!
 
@@ -85,36 +124,34 @@ llms:
 
 ## Example Output
 
-Here's an example of the output of a real world script that Baish analyzed.
+Here's an example of the output of a real world script that Baish analyzed. In fact, it's the install script for Baish itself!
 
 ```text
-$ curl -fsSL https://ollama.com/install.sh | ./baish
-⠙ Analyzing file...
-╭────────────────────────────── Baish - Bash AI Shield ───────────────────────────────╮
-│ Analysis Results - script_1732984526.sh                                             │
-│                                                                                     │
-│ Harm Score:       2/10 ████────────────────                                         │
-│ Complexity Score: 8/10 ████████████████────                                         │
-│ Uses Root:    True                                                                  │
-│                                                                                     │
-│ File type: text/x-shellscript                                                       │
-│                                                                                     │
-│ Explanation:                                                                        │
-│ This script is a Linux installer for Ollama, a software package. It installs Ollama │
-│ on the system, detects the operating system architecture, and installs the          │
-│ appropriate version of Ollama. It also checks for and installs NVIDIA CUDA drivers  │
-│ if necessary. The script uses various tools and commands to perform these tasks,    │
-│ including curl, tar, and dpkg. The script is designed to be run as root and         │
-│ modifies the system by installing software and configuring system settings.         │
-│                                                                                     │
-│ Script saved to: /home/ubuntu/.baish/scripts/script_1732984526.sh                   │
-│ To execute, run: bash /home/ubuntu/.baish/scripts/script_1732984526.sh              │
-│                                                                                     │
-│ ⚠️  AI-based analysis is not perfect and should not be considered a complete         │
-│ security audit. For complete trust in a script, you should analyze it in detail     │
-│ yourself. Baish has downloaded the script so you can review and execute it in your  │
-│ own environment.                                                                    │
-╰─────────────────────────────────────────────────────────────────────────────────────╯
+$ curl -sSL https://raw.githubusercontent.com/taicodotca/baish/main/install.sh | baish 
+⠋ Analyzing file...
+╭──────────────────────────────── Baish - Bash AI Shield ────────────────────────────────╮
+│ Analysis Results - 2024-12-21_06-55-35_e9fa19e5_script.sh                              │
+│                                                                                        │
+│ Harm Score:       2/10 ████────────────────                                            │
+│ Complexity Score: 8/10 ████████████████────                                            │
+│ Uses Root:    False                                                                    │
+│                                                                                        │
+│ File type: text/x-shellscript                                                          │
+│                                                                                        │
+│ Explanation:                                                                           │
+│ The script is a bash installer for baish, a tool that sets up a Python virtual         │
+│ environment and installs baish. It checks for system dependencies, Python              │
+│ requirements, and installs baish using pip. It also sets up an alias for baish in the  │
+│ user's shell configuration file.                                                       │
+│                                                                                        │
+│ Script saved to: /home/curtis/.baish/scripts/2024-12-21_06-55-35_e9fa19e5_script.sh    │
+│ To execute, run: bash                                                                  │
+│ /home/curtis/.baish/scripts/2024-12-21_06-55-35_e9fa19e5_script.sh                     │
+│                                                                                        │
+│ ⚠️  AI-based analysis is not perfect and should not be considered a complete security   │
+│ audit. For complete trust in a script, you should analyze it in detail yourself. Baish │
+│ has downloaded the script so you can review and execute it in your own environment.    │
+╰────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
 ## Caveats and Disclaimers

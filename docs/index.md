@@ -61,23 +61,52 @@ It is straightforward to add support for other providers, pretty much anything L
 
 ### Install
 
-Run the install script:
+* Ensure to have the prerequisites installed
+* Install with pipx is recommended
+* Install with the install script is also supported, as it creates a virtual environment and installs the prerequisites for you
+* Install with pip is also supported
+
+#### Prerequisites
+
+Ensure you have prerequisites installed. Currently the install script won't install the prerequisites for you.
+
+On Linux:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/taico-org/baish/main/install.sh -o install.sh
-chmod +x install.sh
-./install.sh
+sudo apt install libmagic1
 ```
 
-or install with pip:
+On macOS:
+
+```bash
+brew install libmagic
+```
+
+#### Install with pipx
+
+First, install [pipx](https://github.com/pypa/pipx). There are instructions for Mac, Linux, and Windows on the pipx website.
+
+Then, install baish with pipx:
+
+```bash
+pipx install baish
+```
+
+Follow the pipx instructions to setup the alias in your shell, and at that point you can run `baish` as normal.
+
+#### Install with pip
+
+>NOTE: It's recommended to use pipx to install baish, as it creates a virtual environment to install the dependencies in.
 
 ```bash
 pip install baish
 ```
 
-Edit the `~/.baish/config.yaml` file to your liking.
+### Configure
 
-Set your API key in your environment variables, e.g. `export OPENAI_API_KEY=...` or `export ANTHROPIC_API_KEY=...`
+Ensure to set your API key in your environment variables, e.g. `export OPENAI_API_KEY=...` or `export ANTHROPIC_API_KEY=...`
+
+Edit the `~/.baish/config.yaml` file to your liking.
 
 Now you can run baish!
 
