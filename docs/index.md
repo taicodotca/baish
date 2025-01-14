@@ -39,6 +39,7 @@ At this time, it is best to use a LLM provider that has a large context window, 
 
 Baish currently supports the following providers:
 
+* Cohere 🇨🇦
 * Groq
 * Anthropic
 * OpenAI

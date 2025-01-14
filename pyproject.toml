@@ -1,6 +1,6 @@
 [project]
 name = "baish"
-version = "0.2.0a2"
+version = "0.3.0a0"
 description = "A security-focused tool that uses LLMs to analyze shell scripts"
 readme = "README.md"
 authors = [

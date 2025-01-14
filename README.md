@@ -16,7 +16,7 @@ The [Toronto Artificial Intelligence and Cybersecurity Organization (TAICO)](htt
 
 ### Prerequisites
 
-* An API key from a supported LLM provider, e.g. OpenAI, Anthropic, Groq, etc. or a local LLM.
+* An API key from a supported LLM provider, e.g. Cohere,OpenAI, Anthropic, Groq, etc. or a local LLM.
 * Knowing which model from the provider you are going to use.
 * Python 3.10 or later
 * pip or pip3 installed
@@ -38,7 +38,7 @@ Ensure you have prerequisites installed. Currently the install script won't inst
 On Linux:
 
 ```bash
-sudo apt install libmagic1
+sudo apt install libmagic1 -y
 ```
 
 On macOS:
@@ -68,6 +68,12 @@ pip install baish
 ```
 
 ### Configure
+
+Create the `~/.baish` directory:
+
+```bash
+mkdir ~/.baish
+```
 
 Ensure to set your API key in your environment variables, e.g. `export OPENAI_API_KEY=...` or `export ANTHROPIC_API_KEY=...`
 

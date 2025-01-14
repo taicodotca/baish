@@ -275,6 +275,7 @@ Examples:
         default="text",
         help="Output format (text or json)",
     )
+    parser.add_argument("--llm", help="Set LLM model configuration name")
 
     # First parse to get config
     args, _ = parser.parse_known_args()
@@ -286,9 +287,7 @@ Examples:
         and "--help" not in sys.argv
     ):
         config = Config.load(args.config) if args.config else Config.load()
-        parser.add_argument(
-            "--llm", choices=list(config.llms.keys()), help="Choose LLM configuration"
-        )
+ 
 
     return parser.parse_args()
 

@@ -11,6 +11,7 @@ from langchain_anthropic import ChatAnthropic
 from langchain_groq import ChatGroq
 from langchain_ollama import ChatOllama
 from langchain_openai import ChatOpenAI
+from langchain_cohere import ChatCohere
 
 from .config import Config
 from .logger import setup_logger
@@ -83,15 +84,37 @@ class LLMLoggingCallback(BaseCallbackHandler):
         self._current_id = str(uuid.uuid4())[:8]
         self.results_mgr.current_date = self._current_date
         self.results_mgr.current_id = self._current_id
+        self._current_provider = "unknown"
+        self._current_model = "unknown"
 
     def on_llm_start(
         self, serialized: Dict[str, Any], prompts: list[str], **kwargs: Any
     ) -> None:
         logger.debug(f"LLM Start: {self._current_date}, {self._current_id}")
+        logger.debug(f"Serialized LLM data: {serialized}")
+        logger.debug(f"LLM kwargs: {kwargs}")
+        
+        # Try different ways to get model name
+        self._current_provider = serialized.get("name", "unknown")
+        
+        # For Cohere, extract from metadata
+        if "metadata" in kwargs and "ls_model_name" in kwargs["metadata"]:
+            self._current_model = kwargs["metadata"]["ls_model_name"]
+        else:
+            self._current_model = (
+                serialized.get("model_name") or 
+                serialized.get("model") or 
+                kwargs.get("model") or
+                serialized.get("_model", {}).get("model") or
+                serialized.get("_model", {}).get("name") or
+                "unknown"
+            )
+        
+        logger.debug(f"Provider: {self._current_provider}, Model: {self._current_model}")
         log_entry = {
             "timestamp": datetime.datetime.now().isoformat(),
-            "provider": serialized.get("name", "unknown"),
-            "model": serialized.get("model_name", "unknown"),
+            "provider": self._current_provider,
+            "model": self._current_model,
             "prompt": prompts[0] if prompts else "",
             "response": "",
             "error": None,
@@ -110,8 +133,8 @@ class LLMLoggingCallback(BaseCallbackHandler):
         logger.debug(f"LLM Response: {text[:100]}...")
         log_entry = {
             "timestamp": datetime.datetime.now().isoformat(),
-            "provider": "unknown",
-            "model": "unknown",
+            "provider": self._current_provider,
+            "model": self._current_model,
             "prompt": "",
             "response": text,
             "error": None,
@@ -125,8 +148,8 @@ class LLMLoggingCallback(BaseCallbackHandler):
         logger.error(f"LLM Error: {str(error)}")
         log_entry = {
             "timestamp": datetime.datetime.now().isoformat(),
-            "provider": "unknown",
-            "model": "unknown",
+            "provider": self._current_provider,
+            "model": self._current_model,
             "prompt": "",
             "response": "",
             "error": str(error),
@@ -152,7 +175,18 @@ def get_llm(config: Config, results_mgr: ResultsManager = None):
         # NOTE(curtis - don't remove): We set the context window to 4096 to support the
         # long prompt. Otherwise the prompt will be truncated and the LLM will not be
         # able to see the entire prompt including the request to return json.
-        if config.llm.provider == "ollama":
+        if config.llm.provider == "cohere":
+            if not config.llm.api_key:
+                raise APIError(
+                    "Cohere", "API key not found in environment or config file"
+                )
+            return ChatCohere(
+                temperature=config.llm.temperature,
+                cohere_api_key=config.llm.api_key,
+                model_name=config.llm.model,
+                callbacks=[get_llm._callback],
+            )
+        elif config.llm.provider == "ollama":
             return ChatOllama(
                 temperature=config.llm.temperature,
                 model=config.llm.model,

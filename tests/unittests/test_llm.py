@@ -3,14 +3,15 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import Mock, mock_open, patch
+import json
 
 from langchain_core.callbacks import BaseCallbackHandler
 from langchain_groq import ChatGroq
 from langchain_ollama import ChatOllama
 
 from src.baish.config import Config, LLMConfig
-from src.baish.llm import (APIError, CustomJsonParser, create_security_chain,
-                           get_llm)
+from src.baish.llm import (APIError, CustomJsonParser, LLMLoggingCallback,
+                           create_security_chain, get_llm)
 
 
 class TestLLM(unittest.TestCase):
@@ -328,6 +329,64 @@ default_llm: mistral
         self.assertEqual(result["complexity_score"], 8)
         self.assertTrue(result["requires_root"])
         self.assertEqual(result["explanation"], "Some explanation")
+
+    def test_llm_logging_provider_model(self):
+        """Test that provider and model are correctly logged across callbacks"""
+        config = Config(llms={}, default_llm=None, baish_dir=Path(self.temp_dir))
+        callback = LLMLoggingCallback(config)
+
+        # Mock LLM start
+        callback.on_llm_start(
+            {"name": "TestProvider", "model_name": "test-model-v1"},
+            ["test prompt"]
+        )
+
+        # Mock LLM end
+        callback.on_llm_end(Mock(generations=[[Mock(text="test response")]]))
+
+        # Mock LLM error
+        callback.on_llm_error(Exception("test error"))
+
+        # Read the log file
+        log_file = list(Path(self.temp_dir).glob("logs/*_llm.jsonl"))[0]
+        with open(log_file) as f:
+            logs = [json.loads(line) for line in f]
+
+        # Verify provider and model are consistent across all entries
+        for log in logs:
+            self.assertEqual(log["provider"], "TestProvider")
+            self.assertEqual(log["model"], "test-model-v1")
+
+        # Verify specific entries
+        self.assertEqual(logs[0]["prompt"], "test prompt")
+        self.assertEqual(logs[1]["response"], "test response")
+        self.assertEqual(logs[2]["error"], "test error")
+
+    def test_llm_logging_provider_model_cohere_metadata(self):
+        """Test that provider and model are correctly logged with Cohere metadata"""
+        config = Config(llms={}, default_llm=None, baish_dir=Path(self.temp_dir))
+        callback = LLMLoggingCallback(config)
+
+        # Mock Cohere-style LLM start with metadata
+        callback.on_llm_start(
+            {"name": "ChatCohere"},
+            ["test prompt"],
+            metadata={"ls_model_name": "command-r-plus-08-2024"}
+        )
+
+        # Mock LLM end
+        callback.on_llm_end(Mock(generations=[[Mock(text="test response")]]))
+
+        # Read the log file
+        log_file = list(Path(self.temp_dir).glob("logs/*_llm.jsonl"))[0]
+        with open(log_file) as f:
+            logs = [json.loads(line) for line in f]
+
+        # Verify provider and model are correctly captured
+        self.assertEqual(logs[0]["provider"], "ChatCohere")
+        self.assertEqual(logs[0]["model"], "command-r-plus-08-2024")
+        self.assertEqual(logs[1]["provider"], "ChatCohere")
+        self.assertEqual(logs[1]["model"], "command-r-plus-08-2024")
 
 
 if __name__ == "__main__":

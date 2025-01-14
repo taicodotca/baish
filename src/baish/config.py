@@ -55,7 +55,7 @@ class Config:
     current_id: Optional[str] = None
     current_date: Optional[str] = None
 
-    SUPPORTED_PROVIDERS = ["groq", "anthropic", "ollama", "openai"]
+    SUPPORTED_PROVIDERS = ["groq", "anthropic", "ollama", "openai", "cohere"]
 
     @staticmethod
     def validate_llm_name(name: str) -> bool:
