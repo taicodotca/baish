@@ -1,6 +1,6 @@
 [project]
 name = "baish"
-version = "0.3.0a0"
+version = "0.3.0a1"
 description = "A security-focused tool that uses LLMs to analyze shell scripts"
 readme = "README.md"
 authors = [
@@ -32,6 +32,8 @@ dependencies = [
     "langchain-anthropic>=0.3.0",
     "langchain-groq>=0.2.1",
     "langchain-core>=0.3.21",
+    "langchain-cohere>=0.3.4",
+    "cohere>=5.13.6",
     "pydantic>=2.10.2",
     "loguru>=0.7.2",
     "langchain-ollama>=0.2.0",
